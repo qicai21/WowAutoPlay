@@ -35,22 +35,18 @@ class ClientTest(unittest.TestCase):
         is_in_btlground = self.client.inBattlegroundOrNot()
         self.assertTrue(is_in_btlground)
         
-    def test_can_find_release_soul(self):
-        should_to_release = self.client.isReleaseSoulLabelShown()
-        self.assertTrue(should_to_release)
-        
-    def test_can_enter_battle_label(self):
-        enter_label = self.client.isEnterBattleLabelShown()
-        self.assertTrue(enter_label)
-    
-    def test_can_touch_delivery_btn(self):
-        (x, y) = self.client.getDeliveryBtnXY()
-        win32api.SetCursorPos((x, y))
-        
-    def test_can_identify_leave_battle_label(self):
-        leave_label = self.client.isLeaveBattleLabelShown()
-        self.assertTrue(leave_label)
-        
+    def test_can_get_btn_pos_factor(self):
+        pos = self.client.getBtnPosFactor('test_btn')
+        _pos_x = 10/100
+        _pos_y = 20/40
+        self.assertEqual(pos, (_pos_x, _pos_y))
+
+    def test_read_btn_json_return_dict(self):
+        read = self.client.readBtnInfoFromJson()
+        is_read_data_dict = type(read) == dict
+        is_contain_right_data = 'join_queue_btn' in read
+        self.assertTrue(is_read_data_dict and is_contain_right_data)
+
 class PlayerTest(unittest.TestCase):
     def setUp(self):
         client = WowClient()

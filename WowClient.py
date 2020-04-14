@@ -10,6 +10,7 @@ import time
 import random
 import pythoncom
 import cv2
+import json
 import numpy as np
 
 from PIL import Image, ImageGrab
@@ -110,32 +111,24 @@ class WowClient():
         shell.SendKeys('%')  
         win32gui.SetForegroundWindow(self.__window)
         pythoncom.CoInitialize()
-        
-    def getJoinBattleBtnXY(self):
-        x = round((self.display_ltrb[2]-self.display_ltrb[0])*8.8/20+self.display_ltrb[0])
-        y = round((self.display_ltrb[3]-self.display_ltrb[1])*8.3/32+self.display_ltrb[1])
-        return (x, y)
-    
-    def getLeaveBattleBtnXY(self): 
-        x = round((self.display_ltrb[2]-self.display_ltrb[0])*10/20+self.display_ltrb[0])
-        y = round((self.display_ltrb[3]-self.display_ltrb[1])*21.5/31+self.display_ltrb[1])
+
+    def getBtnPosFactor(self, btn):
+        btn_dict = self.readBtnInfoFromJson()
+        btn_xy = btn_dict[btn]
+        x = btn_xy['x'][0] / btn_xy['x'][1]
+        y = btn_xy['y'][0] / btn_xy['y'][1]
         return (x, y)
 
-    def getJoinSequenceBtnXY(self):
-        x = round((self.display_ltrb[2]-self.display_ltrb[0])*2.5/20+self.display_ltrb[0])
-        y = round((self.display_ltrb[3]-self.display_ltrb[1])*19.2/32+self.display_ltrb[1])
-        return (x, y)
-    
-    def getReleaseSoulBtnXY(self):
-        x = round((self.display_ltrb[2]-self.display_ltrb[0])*10/20+self.display_ltrb[0])
-        y = round((self.display_ltrb[3]-self.display_ltrb[1])*19.2/32+self.display_ltrb[1])
-        return (x, y)
-    
-    def getDeliveryBtnXY(self):
-        x = round((self.display_ltrb[2]-self.display_ltrb[0])*1.2/20+self.display_ltrb[0])
-        y = round((self.display_ltrb[3]-self.display_ltrb[1])*19.2/32+self.display_ltrb[1])
-        return (x, y)
-    
+    def getBtnPos(self, btn):
+        (x, y) = self.getBtnPosFactor(btn)
+        pos_x = round((self.display_ltrb[2]-self.display_ltrb[0])*x+self.display_ltrb[0])
+        pos_y = round((self.display_ltrb[3]-self.display_ltrb[1])*y+self.display_ltrb[1])
+        return (pos_x, pos_y)
+
+    def readBtnInfoFromJson(self):
+        with open('btn_info.json', 'r') as f:
+            return json.load(f)
+
     def imageMatch(self, template_path, screenshot_scale, parama=5, output=False):
         queryImage = cv2.imread(template_path, 0)
         screenshot = self.screenshot(*screenshot_scale)
