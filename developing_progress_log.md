@@ -188,11 +188,19 @@ if __name__=="__main__":
 
 5. 识别图像
 
-   已经能够识别是否在战场
+   已经能够识别：
 
-   是否需要放魂
+   排队成功
 
-   待识别的离开战场
+   待进入战场？？
+
+   是否在战场
+
+   死亡待放魂
+
+   灵魂状态
+
+   待离开战场
 
    
 
@@ -203,3 +211,7 @@ if __name__=="__main__":
 8. 模拟使用技能
 
 9. 第一次封装
+
+
+
+   ...rface\AddOns\Blizzard_WorldMap\Blizzard_WorldMap.lua:178: OpenWorldMap()

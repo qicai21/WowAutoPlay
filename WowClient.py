@@ -3,15 +3,14 @@
 
 import win32gui
 import win32con
-import win32api
 import win32print
 import win32com.client as client
 import time
-import random
 import pythoncom
 import cv2
 import json
 import numpy as np
+import pywintypes
 
 from PIL import Image, ImageGrab
 from win32api import GetSystemMetrics
@@ -19,6 +18,8 @@ from matplotlib import pyplot as plt
 
 import keybdAct
 
+
+SAVE_SCREENSHOT_IMG = True
 
 def convert_window_ltrb(display_ltrb):
     
@@ -46,10 +47,16 @@ class WowClient():
     # 创建wowclient方法可以直接拿到wowclient，包括截图，前置顶，校验前置顶，id，hwnd实例等
     
     def __init__(self):
-        self.__window = win32gui.FindWindow("GxWindowClass", "魔兽世界")
+        self.getWowWindow()
         self.refresh_window()
-        
-    def screenshot(self, ttl=1, i=1, save=True):
+
+    def getWowWindow(self):
+        self.window = win32gui.FindWindow("GxWindowClass", "魔兽世界")
+
+    def getLaucherWindow(self):
+        return win32gui.FindWindow("Qt5QWindowOwnDCIcon", "暴雪战网")
+
+    def screenshot(self, ttl=1, i=1):
         """可以支持部分截屏，比如ttl=4, i=2,就是截取上下左右分平的右上屏"""
         
         self.focus_on_window()
@@ -94,7 +101,7 @@ class WowClient():
             
         im = ImageGrab.grab(ltrb)
         
-        if save:
+        if SAVE_SCREENSHOT_IMG:
             now = time.localtime(time.time())
             name = f'./resources/screenshots/screenshots_{now.tm_year}_{now.tm_mon}_{now.tm_mday}_{now.tm_hour}_{now.tm_min}_{now.tm_sec}.jpg'
             im.save(name)
@@ -102,14 +109,33 @@ class WowClient():
         return im
     
     def refresh_window(self):
-        self.display_ltrb = win32gui.GetWindowRect(self.__window)
+        self.display_ltrb = win32gui.GetWindowRect(self.window)
         self.system_ltrb = convert_window_ltrb(self.display_ltrb)
         
-    def focus_on_window(self):
+    def focus_on_window(self, window=None):
+        if window == None:
+            window = self.window
         pythoncom.CoInitialize()
         shell = client.Dispatch("WScript.Shell")
         shell.SendKeys('%')  
-        win32gui.SetForegroundWindow(self.__window)
+        try:
+            win32gui.SetForegroundWindow(window)
+        except pywintypes.error as e:
+            titles = set()
+
+            def getAllActiveWindow(hwnd, mouse):
+                # 去掉下面这句就所有都输出了，但是我不需要那么多
+                if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd) and win32gui.IsWindowVisible(hwnd):
+                    titles.add(win32gui.GetWindowText(hwnd) + "   " + win32gui.GetClassName(hwnd))
+
+            win32gui.EnumWindows(getAllActiveWindow, 0)
+            lt = [t for t in titles if t]
+            lt.sort()
+            for t in lt:
+                print(t)
+            raise e
+
+
         pythoncom.CoInitialize()
 
     def getBtnPosFactor(self, btn):
@@ -126,10 +152,10 @@ class WowClient():
         return (pos_x, pos_y)
 
     def readBtnInfoFromJson(self):
-        with open('btn_info.json', 'r') as f:
-            return json.load(f)
+        with open('config.json', 'r') as f:
+            return json.load(f)['btn_pos_factor']
 
-    def imageMatch(self, template_path, screenshot_scale, parama=5, output=False):
+    def imageMatch(self, template_path, screenshot_scale, output=False):
         queryImage = cv2.imread(template_path, 0)
         screenshot = self.screenshot(*screenshot_scale)
         time.sleep(0.5)
@@ -157,186 +183,4 @@ class WowClient():
             resultimage=cv2.drawMatchesKnn(queryImage,kp1,trainingImage,kp2,matches,None,**drawParams) #画出匹配的结果
             plt.imshow(resultimage,),plt.show()
 
-        print(matchesMask.count([1, 0]))
-        return matchesMask.count([1, 0]) >= parama
-    
-    def inBattlegroundOrNot(self):
-        in_battle_sysmbol = './resources/img_templates/in_btl_tplt.jpg'
-        return self.imageMatch(in_battle_sysmbol, (4, 1, False), 9)
-    
-    def isReleaseSoulLabelShown(self):
-        release_soul_label = './resources/img_templates/die_label.jpg'   
-        return self.imageMatch(release_soul_label, (1, 1, False), 10)
-    
-    def isEnterBattleLabelShown(self):
-        enter_battle_label = './resources/img_templates/enter_battle_label.jpg'
-        return self.imageMatch(enter_battle_label, (3, 2, False), 5)
-        
-    def isLeaveBattleLabelShown(self):
-        leave_battle_label = './resources/img_templates/battle_fin.jpg'
-        return self.imageMatch(leave_battle_label, (1, 1, False), 5)
-        
-class Player():
-    
-    def __init__(self, wow_window):
-        self.alive = "alive"
-        self.in_battle = False
-        self.in_sequence = False
-        self.poistion = "unknow"
-        self.window = wow_window
-    
-    
-    def avoid_afk(self):
-        # 防止掉线
-        self.window.refresh_window()
-        self.window.focus_on_window()
-        r = random.randint(0, 7)
-        keybdAct.press("spacebar")
-        print('嗯，跳一跳，地好烫')
-        self.longrest()
-#         if r == 7:
-#             keybdAct.press('5')
-#             print('你炫酷的让大家跳了一支舞')
-#             self.longrest()
-            
-#         elif r < 2:
-#             t = random.uniform(0.5, 1)
-#             keybdAct.pressAndHold('left_arrow')
-#             time.sleep(t)
-#             keybdAct.release('left_arrow')
-#             self.longrest()
-#             keybdAct.pressAndHold('right_arrow')
-#             time.sleep(t)
-#             keybdAct.release('right_arrow')
-#             print('你刚刚完成了一圈闲逛')
-#             self.longrest()
-#         else:
-#             keybdAct.press("spacebar")
-#             print('嗯，跳一跳，地好烫')
-#             self.longrest()
-
-    def join_sequence(self):
-        # 进战场
-        print("尝试排队")
-        self.window.refresh_window()
-        self.window.focus_on_window()
-        keybdAct.press('`')
-        self.longrest()
-        keybdAct.press('+')
-        self.shortrest()
-        keybdAct.press('\\')
-        self.longrest()
-        self.longrest()
-        keybdAct.press('+')
-        self.longrest()
-        keybdAct.press('+')
-        self.shortrest()
-        self.longrest()
-        keybdAct.press('2')
-        self.round_wait()
-        
-    def enter_battle(self):
-        print("检查排队进度")
-        self.window.refresh_window()
-        self.window.focus_on_window()
-        self.shortrest()
-        
-        if self.window.isEnterBattleLabelShown():
-            print("战场开启，进入战场")
-            keybdAct.press('+')
-            self.longrest()
-#             (x, y) = self.window.getJoinBattleBtnXY()
-#             win32api.SetCursorPos((x, y))
-#             time.sleep(0.05)
-#             win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)    # 鼠标左键按下
-#             time.sleep(0.05)
-#             win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)    # 鼠标左键弹起
-            return True
-
-        print("仍需耐心等待")
-        return False
-    
-    def leave_battle(self):
-        print("检查战场结束")
-        self.window.refresh_window()
-        self.window.focus_on_window()
-        self.shortrest()
- 
-        if self.window.isLeaveBattleLabelShown():
-            print("尝试离开战场")
-            (x, y) = self.window.getLeaveBattleBtnXY()
-            win32api.SetCursorPos((x, y))
-            self.shortrest()
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)    # 鼠标左键按下
-            self.shortrest()
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0) 
-            return True # 成功脱离返回True
-        return False 
-    
-    def release_soul(self):
-        print("检查是否死亡")
-        self.window.refresh_window()
-        self.window.focus_on_window()
-        self.shortrest()
-        
-        if self.window.isReleaseSoulLabelShown():
-            print("释放尸体")
-            (x, y) = self.window.getReleaseSoulBtnXY()
-            win32api.SetCursorPos((x, y))
-            time.sleep(0.05)
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)    # 鼠标左键按下
-            time.sleep(0.05)
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)    # 鼠标左键弹起
-            return False
-        print("活的好好的")
-        return True
-            
-    def delivery_battle_coins(self):
-        self.window.refresh_window()
-        self.window.focus_on_window()
-        self.shortrest()
-        keybdAct.press('-')
-        self.shortrest()
-        keybdAct.press('\\')
-        self.longrest()
-        self.longrest()
-        keybdAct.press('-')
-        self.longrest()
-        (x, y) = self.window.getDeliveryBtnXY()
-        win32api.SetCursorPos((x, y))
-        self.shortrest()
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)    # 鼠标左键按下
-        self.shortrest()
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)    # 鼠标左键弹起
-        self.shortrest()
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)    # 鼠标左键按下
-        self.shortrest()
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)    # 鼠标左键弹起
-        self.shortrest()
-        
-    def is_in_battleground(self):
-        return self.window.inBattlegroundOrNot()
-    
-    def cast_stealth(self):
-        self.window.refresh_window()
-        self.window.focus_on_window()
-        self.shortrest()
-        keybdAct.press('c')
-        self.shortrest()
-        keybdAct.press('4')
-        self.shortrest()
-        
-        
-    def shortrest(self):
-        random_rest = random.uniform(0.25, 0.6)
-        time.sleep(random_rest)
-        
-        
-    def longrest(self):
-        random_rest = random.uniform(1, 2.5)
-        time.sleep(random_rest)
-        
-    def round_wait(self, max_wait=30):
-        random_rest = random.uniform(5, max_wait)
-        time.sleep(random_rest)
-        
+        return matchesMask.count([1, 0])
