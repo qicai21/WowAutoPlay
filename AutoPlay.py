@@ -1,8 +1,10 @@
 import time
 import random
 import json
+import threading
+import tkinter as tk
+from tkinter import *
 from enum import Enum
-from threading import Thread
 
 import keybdAct
 from WowClient import WowClient
@@ -21,17 +23,33 @@ class PlayStatus(Enum):
     new_to_battlefield = 2
     play_in_battlefield = 3
 
-class ScriptBase(Thread):
+class ScriptBase(threading.Thread):
     def __init__(self, player):
-        Thread.__init__(self)
+        threading.Thread.__init__(self)
         self.player = player
-        self.continue_game = True
-        self.factor = 0
+        self.__paused = threading.Event()
+        self.__paused.clear()
+        self.stepter = 0 # 用于计算是否执行重新登录检查的计步器，1/5几率
         self.assitedOptionBase = ASSITED_OPTION_BASE
+        self.setDaemon(True)
+
+    def pause(self):
+        self.__paused.clear()
+
+    def resume(self):
+        self.__paused.set()
+
+    def running_switch(self):
+        if self.__paused.isSet():
+            self.__paused.clear()
+            return "开始"
+        else:
+            self.__paused.set()
+            return "结束"
 
     def doAssitedOption(self):
-        self.factor = self.factor % self.assitedOptionBase + 1
-        return self.factor % self.assitedOptionBase == 1
+        self.stepter = self.stepter % self.assitedOptionBase + 1
+        return self.stepter % self.assitedOptionBase == 1
             
 
     def refresh(self):
@@ -51,7 +69,8 @@ class ScriptBase(Thread):
  
     def run(self):
         i = 0
-        while(self.continue_game):
+        while True:
+            self.__paused.wait()
             if self.doAssitedOption():
                 # 先确认游戏是否断线了，断线就重连
                 offline = self.player.checkOffline()
@@ -85,7 +104,7 @@ class WaitForBuffScript(ScriptBase):
             print(f"目前情况为buff时间{self.dragonHeadBuffRemaining}, 要求时间{self.dragonHeadBuffMin}")
             if self.dragonHeadBuffRemaining < self.dragonHeadBuffMin * 60:
                 self.player.logout()
-                self.continue_game = False
+                self.__paused.clear()
 
         longRest(10)
         if self.chiefRegardsBuffMin != 0:
@@ -95,7 +114,7 @@ class WaitForBuffScript(ScriptBase):
             self.chiefRegardsBuffRemaining = 120*60 - (time.time() - self.chiefRegardsBuffRemaining)
             if self.chiefRegardsBuffRemaining < self.chiefRegardsBuffMin * 60:
                 self.player.logout()
-                self.continue_game = False
+                self.__paused.clear()
 
         longRest(60)
 
@@ -227,20 +246,40 @@ class AlxScript(BattlefieldScriptBase):
             keybdAct.press("spacebar")
             longRest(15)
 
-def run(script):
+def console_run(script):
     option = None
-    script.setDaemon(True)
+    wow = WowClient()
+    player = Player(wow)
+    script = AlxScript(player)
     print("挂机防掉线开始")
     script.start()
     
     while(option!='q'):
         option = input("是否停止？输入q停止挂机")
     print("挂机结束")
-    
             
-if __name__ == "__main__":
-    wow = WowClient()
-    player = Player(wow)
-    script = AlxScript(player)
-    # script = WaitForBuffScript(player)
-    run(script)
+
+window = Tk()
+window.title('AutoWow工程版')
+window.geometry('480x150')
+logo = PhotoImage(file="resources/t.png")
+w1 = Label(window, image=logo).pack(side="top")
+explanation = """本软件仅用于测试，说明：
+目前还是最基础的工程版，用于alx和战歌"""
+
+tk.Label(window,text=explanation,justify=LEFT).place(x=10,y=85,anchor='nw')
+var = tk.StringVar()
+var.set("开始")
+wow = WowClient()
+player = Player(wow)
+script = AlxScript(player)
+
+def click_switch_btn():
+    btn_content = script.running_switch()
+    var.set(btn_content)
+
+script.start()
+
+b = tk.Button(window, textvariable=var, command=click_switch_btn, width=15, height=2,).place(x=330,y=90,anchor='nw')
+
+window.mainloop()

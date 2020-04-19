@@ -19,7 +19,7 @@ from matplotlib import pyplot as plt
 import keybdAct
 
 
-SAVE_SCREENSHOT_IMG = True
+SAVE_SCREENSHOT_IMG = False
 
 def convert_window_ltrb(display_ltrb):
     
