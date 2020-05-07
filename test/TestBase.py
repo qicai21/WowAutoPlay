@@ -1,14 +1,13 @@
 import unittest
 import os
 from WowClient import WowClient
-from Player import Player
 import time
 import pathlib
 import win32api
 import win32gui
-import pywintypes
 from keybdAct import *
 from KeyboardRecorder import KeyboardRecorder as kybd
+
 
 # 遍历路径下所有文件中的test，暂时不用
 class RunCase(unittest.TestCase):
@@ -25,6 +24,9 @@ class RunCase(unittest.TestCase):
         
 
 class FakeWowClient(WowClient):
+    """ 通过打开画图，并命名为fake_client.jpg，伪造一个游戏窗口，然后进行图标检测。
+        这需要进行一些手动配置，图片设置好了之后按1开始测试.:w
+    """
     def __init__(self):
         WowClient.__init__(self)
         self.window = win32gui.FindWindow("MSPaintApp", "fake_client.jpg - 画图")
@@ -87,46 +89,3 @@ class ClientTest(unittest.TestCase):
         is_contain_right_data = 'join_queue_btn' in read
         self.assertTrue(is_read_data_dict and is_contain_right_data)
 
-class PlayerTest(unittest.TestCase):
-    def setUp(self):
-        client = WowClient()
-        self.player = Player(client)
-        
-    def st_can_turn_around(self):
-        self.player.do()
-
-        self.player.jump_continue()
-
-        is_satisfy = input("1:good, 2:bad")
-        self.assertEqual(int(is_satisfy), 1) 
-
-    def st_avoid_afk_is_satisfy(self):
-        self.player.avoid_afk()
-        is_satisfy = input("1:good, 2:bad")
-        self.assertEqual(is_satisfy, 1) 
-
-    def st_can_relogon(self):
-        is_offline = self.player.checkOffline()
-        if is_offline:
-            self.player.reLogon()
-            is_offline = self.player.checkOffline()
-            self.assertFalse(is_offline)
-        else:
-            self.fail('识别为没断线')
-    
-    def st_can_logout(self):
-        self.player.refreshWindow()
-        time.sleep(3)
-        self.player.logout()
-        time.sleep(8)
-        self.assertRaises(pywintypes.error, self.player.refreshWindow)
-        
-class KeyboardRecordTest(unittest.TestCase):
-    def testCanTakeARecorder(self):
-        _kybd = kybd()
-        _kybd.start()
-        print(_kybd.script)
-        self.fail()
-
-if __name__=='__main__':
-    unittest.main()
