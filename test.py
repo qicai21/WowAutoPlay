@@ -7,7 +7,8 @@ import pathlib
 import win32api
 import win32gui
 import pywintypes
- 
+from keybdAct import *
+from KeyboardRecorder import KeyboardRecorder as kybd
 
 # 遍历路径下所有文件中的test，暂时不用
 class RunCase(unittest.TestCase):
@@ -41,13 +42,13 @@ class ImageMatchTest(unittest.TestCase):
             if _input == '1':
                 read = True
 
-    def test_can_match_right_img(self):
+    def _can_match_right_img(self):
         self.getReady("正确匹配")
         result = self.client.imageMatch(self.sysmbol, (1, 1))
         print("匹配结果为%d"%result)
         self.assertTrue(result>10)
 
-    def test_cannot_match_wrong_img(self):
+    def _cannot_match_wrong_img(self):
         self.getReady("错误匹配")
         result = self.client.imageMatch(self.sysmbol, (1, 1))
         print("匹配结果为%d"%result)
@@ -57,7 +58,7 @@ class ClientTest(unittest.TestCase):
     def setUp(self):
         self.client = FakeWowClient()
     
-    def test_can_identify_offline(self):
+    def _can_identify_offline(self):
         offline_sysmbol = './resources/img_templates/offline_tplt.jpg'
         result = self.client.imageMatch(offline_sysmbol, (4, 1))
         self.assertTrue(result>50, f"matches is %d"%result)
@@ -74,13 +75,13 @@ class ClientTest(unittest.TestCase):
         is_in_btlground_match = self.client.imageMatch('./resources/img_templates/in_btl_tplt.jpg',(1, 1))
         self.assertTrue(is_in_btlground_match>10, f"matchis %d"%is_in_btlground_match)
         
-    def test_can_get_btn_pos_factor(self):
+    def _can_get_btn_pos_factor(self):
         pos = self.client.getBtnPosFactor('test_btn')
         _pos_x = 10/100
         _pos_y = 20/40
         self.assertEqual(pos, (_pos_x, _pos_y))
 
-    def test_read_btn_json_return_dict(self):
+    def _read_btn_json_return_dict(self):
         read = self.client.readBtnInfoFromJson()
         is_read_data_dict = type(read) == dict
         is_contain_right_data = 'join_queue_btn' in read
@@ -120,6 +121,12 @@ class PlayerTest(unittest.TestCase):
         time.sleep(8)
         self.assertRaises(pywintypes.error, self.player.refreshWindow)
         
+class KeyboardRecordTest(unittest.TestCase):
+    def testCanTakeARecorder(self):
+        _kybd = kybd()
+        _kybd.start()
+        print(_kybd.script)
+        self.fail()
 
 if __name__=='__main__':
     unittest.main()

@@ -7,7 +7,6 @@ import win32con
 import win32api
 import json
 import keybdAct
-import WowClient
 
 from WaitAndOption import shortRest, longRest, roundWait
 
@@ -45,6 +44,21 @@ class Player():
         keybdAct.pressHoldRelease("shift", self.btnBarNumber)
         shortRest()
 
+    def openDoor(self):
+        (x, y) = self.window.getBtnPos('gnomergan_door')
+        keybdAct.press('`')
+        longRest(3)
+        keybdAct.press('s', 0.15)
+        win32api.SetCursorPos((x, y))
+        shortRest(2)
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0)    # 鼠标左键按下
+        shortRest(0.05)
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, x, y, 0, 0)    # 鼠标左键弹起
+        shortRest(5)
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0)    # 鼠标左键按下
+        shortRest(0.05)
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, x, y, 0, 0)    # 鼠标左键弹起
+
     def postHonormark(self, battlefield):
         # 需要提供战场名称，alx or warsong。
         btn_name = None
@@ -77,6 +91,15 @@ class Player():
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x2, y2, 0, 0)    # 鼠标左键弹起
         shortRest()
 
+    def right_click(self, pos):
+        (x, y) = self.window.getBtnPos(tuple(pos))
+        win32api.SetCursorPos((x, y))
+        shortRest()
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0)    # 鼠标左键按下
+        shortRest()
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, x, y, 0, 0)    # 鼠标左键弹起
+        shortRest()
+ 
     def checkOffline(self):
         offline_sysmbol = './resources/img_templates/offline_tplt.jpg'
         result = self.window.imageMatch(offline_sysmbol, (4, 1))
@@ -95,14 +118,15 @@ class Player():
         print("关闭所有wow窗口")
 
         # 再登陆
-        laucher = self.window.getLaucherWindow()
-        self.window.focus_on_window(laucher)
-        longRest()
-        keybdAct.press('enter')
-        print("从登陆器执行了登录")
+        while not is_wow_window_alive:
+            laucher = self.window.getLaucherWindow()
+            self.window.focus_on_window(laucher)
+            longRest()
+            keybdAct.press('enter')
+            print("从登陆器执行了登录")
 
-        longRest(15)
-        self.window.getWowWindow()
+            longRest(30)
+            is_wow_window_alive = self.window.getWowWindow()
         # 检查是否登录到了人物选择页面，如果没有就等待，可能是排队了
         # 取消掉是否登录到游戏人物界面检验，因为是断线重连
         # is_in_player_select = self.checkInPlaySelectStatus()
@@ -119,6 +143,18 @@ class Player():
 
     def logout(self):
         keybdAct.press(self.quitGameBtn)
+
+    def checkInDungeon(self):
+        sysmbol = './resources/img_templates/in_gnomergan_tplt.jpg'
+        result = self.window.imageMatch(sysmbol, (4, 1))
+        print(f'进入副本匹配,匹配结果为:{result}')
+        return result > 10
+
+    def check_combat(self):
+        sysmbol = './resources/img_templates/in_combat.jpg'
+        result = self.window.imageMatch(sysmbol, (4,1))
+        print(f'检擦是否有铅笔小怪，结果{result}')
+        return result > 10
 
     def checkDragonHeadBuff(self):
         sysmbol = './resources/img_templates/dragon_slayer_buff_tplt.jpg'
@@ -149,10 +185,39 @@ class Player():
         result = self.window.imageMatch(alive_sysmbol, (4, 1))
         print(f'执行了存活匹配, 匹配结果为:{result}')
         return result > 10
-    
+
+    def check_combat_and_attack(self):
+        r = 2 # 只做2次
+        while self.check_combat():
+            time.sleep(5)
+            keybdAct.press('\\', 0.03)
+            if r > 0:
+                keybdAct.press('s', 0.03)
+                r -= 1
+            time.sleep(15)
+
+    def attackLoop(self, duration, force_to_target=False):
+        """attacking by second, eg: duration=20s"""
+        start = time.time()
+        r = True
+        bass = 8
+        f = 0
+        while r:
+            keybdAct.press("2")
+            shortRest(1.5)
+            keybdAct.press("3")
+            shortRest(1.5)
+            if f % bass == 1:
+                keybdAct.press("\\")
+                shortRest()
+                bass -= 1
+            f += 1
+            r = time.time() - start < duration
+
     def clickReloadBtn(self):
         keybdAct.press(self.reloadBtn)
         longRest(10)
+
 
     def turnaround(self, how=360):
         btn = 'd'

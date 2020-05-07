@@ -10,11 +10,10 @@ import pythoncom
 import cv2
 import json
 import numpy as np
-import pywintypes
+from pywintypes import error
 
 from PIL import Image, ImageGrab
 from win32api import GetSystemMetrics
-from matplotlib import pyplot as plt
 
 import keybdAct
 
@@ -120,7 +119,7 @@ class WowClient():
         shell.SendKeys('%')  
         try:
             win32gui.SetForegroundWindow(window)
-        except pywintypes.error as e:
+        except error as e:
             titles = set()
 
             def getAllActiveWindow(hwnd, mouse):
@@ -155,7 +154,7 @@ class WowClient():
         with open('config.json', 'r') as f:
             return json.load(f)['btn_pos_factor']
 
-    def imageMatch(self, template_path, screenshot_scale, output=False):
+    def imageMatch(self, template_path, screenshot_scale):
         queryImage = cv2.imread(template_path, 0)
         screenshot = self.screenshot(*screenshot_scale)
         time.sleep(0.5)
@@ -177,10 +176,5 @@ class WowClient():
         for i, (m,n) in enumerate(matches):
             if m.distance< 0.5*n.distance: #舍弃小于0.5的匹配结果
                 matchesMask[i] = [1,0]
-                
-        if output:
-            drawParams=dict(matchColor=(0,0,255),singlePointColor=(255,0,0),matchesMask=matchesMask,flags=0) #给特征点和匹配的线定义颜色
-            resultimage=cv2.drawMatchesKnn(queryImage,kp1,trainingImage,kp2,matches,None,**drawParams) #画出匹配的结果
-            plt.imshow(resultimage,),plt.show()
 
         return matchesMask.count([1, 0])

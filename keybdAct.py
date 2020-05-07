@@ -162,9 +162,14 @@ def press(*args):
     one press, one release.
     accepts as many arguments as you want. e.g. press('left_arrow', 'a','b').
     '''
-    for i in args:
+    arglist = list(args)
+    if len(args) > 1:
+        hold = arglist.pop(-1)
+    else:
+        hold = 0.05
+    for i in arglist:
         win32api.keybd_event(VK_CODE[i], 0,0,0)
-        time.sleep(.05)
+        time.sleep(hold)
         win32api.keybd_event(VK_CODE[i],0 ,win32con.KEYEVENTF_KEYUP ,0)
  
 def pressAndHold(*args):
