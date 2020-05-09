@@ -8,7 +8,7 @@ from KeyboardRecorder import KeyboardRecorder as kybd
 
 
 class KeyboardRecordTest(unittest.TestCase):
-    def testCanTakeARecorder(self):
+    def testPress1KeyMake2Recorders(self):
         _kybd = kybd()
         _kybd.start()
-        self.assertEqual(len(_kybd.script), 4)
+        self.assertEqual(len(_kybd.script), 2)

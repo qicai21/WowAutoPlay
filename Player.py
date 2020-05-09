@@ -113,7 +113,9 @@ class Player():
             self.window.focus_on_window()
             longRest()
             keybdAct.pressHoldRelease('alt', 'F4')
-            is_wow_window_alive = self.window.getWowWindow()
+            longRest()
+            self.window.getWowWindow()
+            is_wow_window_alive = self.window.window != None
 
         print("关闭所有wow窗口")
 
@@ -126,7 +128,8 @@ class Player():
             print("从登陆器执行了登录")
 
             longRest(30)
-            is_wow_window_alive = self.window.getWowWindow()
+            self.window.getWowWindow()
+            is_wow_window_alive = self.window.window != None
         # 检查是否登录到了人物选择页面，如果没有就等待，可能是排队了
         # 取消掉是否登录到游戏人物界面检验，因为是断线重连
         # is_in_player_select = self.checkInPlaySelectStatus()

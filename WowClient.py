@@ -51,6 +51,8 @@ class WowClient():
 
     def getWowWindow(self):
         self.window = win32gui.FindWindow("GxWindowClass", "魔兽世界")
+        if self.window == 0:
+            self.window = None
 
     def getLaucherWindow(self):
         return win32gui.FindWindow("Qt5QWindowOwnDCIcon", "暴雪战网")
