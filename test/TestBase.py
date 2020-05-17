@@ -28,6 +28,7 @@ class FakeWowClient(WowClient):
         这需要进行一些手动配置，图片设置好了之后按1开始测试.:w
     """
     def __init__(self):
+        super(FakeWowClient, self).__init__()
         self.window = win32gui.FindWindow("MSPaintApp", "fake_client.jpg - 画图")
         self.refresh_window()
 
