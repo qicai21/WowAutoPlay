@@ -8,7 +8,7 @@ from ScriptManager import AlxScript, check_in_expiration
 window = Tk()
 window.title('护肝神器_工程版')
 window.geometry('480x150')
-logo = PhotoImage(file="resources/t.png")
+logo = PhotoImage(file="resources/background.png")
 w1 = Label(window, image=logo).pack(side="top")
 
 explanation = """本软件仅用于测试，说明：
