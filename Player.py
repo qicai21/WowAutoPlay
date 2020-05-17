@@ -45,7 +45,7 @@ class Player():
         shortRest()
 
     def openDoor(self):
-        (x, y) = self.window.getBtnPos('gnomergan_door')
+        (x, y) = self.window.getBtnPos('gnomeregan_door')
         keybdAct.press('`')
         longRest(3)
         keybdAct.press('s', 0.15)
@@ -148,7 +148,7 @@ class Player():
         keybdAct.press(self.quitGameBtn)
 
     def checkInDungeon(self):
-        sysmbol = './resources/img_templates/in_gnomergan_tplt.jpg'
+        sysmbol = './resources/img_templates/in_gnomeregan_tplt.jpg'
         result = self.window.imageMatch(sysmbol, (4, 1))
         print(f'进入副本匹配,匹配结果为:{result}')
         return result > 10

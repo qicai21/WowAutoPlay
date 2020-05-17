@@ -15,7 +15,7 @@ C. "wait_action": 等待，构成为["等待类型","最小等待时间","最大
 {
     // 通过这个设置来决定启用那个脚本作为joinQueueAndPostHonorMark的脚本
     "join_queue_with_script": "join_queue_script",
-    "gnomergan_script": "gnomergan_script_v1", 
+    "gnomeregan_script": "gnomeregan_script_v1", 
 
     // 排战场脚本
     "join_queue_script":[
@@ -54,7 +54,7 @@ C. "wait_action": 等待，构成为["等待类型","最小等待时间","最大
         {"keyboard_action": ["press", "3", "3号宏，刷新界面"]},
         {"wait_action": ["wait_in_second", 10, "电脑再慢10秒也足够刷新"]}
     ],
-    "gnomergan_script_v1":[
+    "gnomeregan_script_v1":[
         // 出本， 重置, 进本
         {"keyboard_action": ["press", "6", 0.05]}, 
         {"wait_action": ["wait_in_second", 1.5]}, 

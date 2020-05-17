@@ -2,7 +2,7 @@ import time
 import tkinter as tk
 from WowClient import WowClient
 from Player import Player
-from ScriptManager import AlxScript, check_in_expiration
+from ScriptManager import AlxScript
 
 
 class Laucher(tk.Tk):
@@ -45,7 +45,7 @@ class Laucher(tk.Tk):
         ).grid(row=1, column=2,padx=0.5, pady=4, sticky='n'+'s'+'e')
 
     def setup_dropdown(self):
-        dropdown_items = ['阿拉希', '战歌', '奥山', '泡世界buff', '刷惩戒器']
+        dropdown_items = self.script.get_enable_scripts_list()
         self.widgets['dropdown_selected'] = tk.StringVar()
         self.widgets['dropdown_selected'].set("选择脚本类型")
         dropdown = tk.OptionMenu(
@@ -56,9 +56,8 @@ class Laucher(tk.Tk):
         print(f"\ndropdown_select: {self.widgets['dropdown_selected'].get()} \n")
         # self.widgets['start_btn_content'] = self.widgets['dropdown_selected']
 
-
     def _click_start_btn(self):
-        if not check_in_expiration():
+        if not self.script.check_in_expiration():
             self.widgets['start_btn_content'] = "过期了"
             return
 

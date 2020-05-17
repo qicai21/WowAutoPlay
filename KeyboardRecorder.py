@@ -104,7 +104,7 @@ def TakeRecord():
     recorder = KeyboardRecorder()
     print('录制开始')
     recorder.start()
-    with open('./GnomerganScript.json', 'w+') as f:
+    with open('./GnomereganScript.json', 'w+') as f:
         json.dump({'GnomereganScript': recorder.script}, f)
     print('录制结束')
 

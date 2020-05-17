@@ -23,7 +23,8 @@ from logWrapper import log
 # 这是一个cheat，最好还是放在config中
 MODE = "test"
 DEFAULT_TRIGGER_BASE = 5
-SCRIPTSFILE ='./scripts.json' 
+CONFIG_FILE = './config.json'
+SCRIPTS_FILE ='./scripts.json' 
 
 class PlayStatus(Enum):
     # 在大厅未排队
@@ -90,12 +91,14 @@ class ScriptBase(threading.Thread):
         
         running_time: '=None/time[%Y%m%d/%H:%M]', 定时执行，为None则不检查执行时间
     """
-    def __init__(self, script_file, period_trigger='off', loop_running=True, running_time=None, *args, **kwargs):
+    def __init__(self, script_file=None, period_trigger='off', loop_running=True,
+                 running_time=None, *args, **kwargs):
         super(ScriptBase, self).__init__()
         self.script_file = script_file
         self.set_period_trigger(period_trigger, **kwargs)
         self.loop_running = loop_running
         self.running_time = running_time
+        self.read_config()
         self.can_go_on = threading.Event()
         self.can_reload_script = threading.Event()
         self.can_reload_script.set()
@@ -167,7 +170,31 @@ class ScriptBase(threading.Thread):
         self.can_reload_script.clear()
         self.singleTripScript()
         self.can_reload_script.set()
-        time.sleep(1)
+
+    def check_in_expiration(self, expired_hash=None):
+        if not expired_hash:
+            expired_hash = self.configs['expired_hash']
+        return checkByExpiredHash(expired_hash)
+    
+    def read_config(self, config_file=CONFIG_FILE):
+        with open(config_file, "r", encoding='utf-8') as file:
+            read = json.dumps(eval(file.read()))
+            self.configs = json.loads(read)
+
+    def get_enable_scripts_list(self):
+        return list(self.configs["enable_scripts"].keys())
+
+    def running_switch(self, script_name):
+        if self.is_running():
+            self.pause()
+            return 'off'
+        else:
+            self.can_reload_script.wait()
+            self.script_file = self.configs['enable_scripts'][script_name]
+            self.loadScript()
+            self.resume()
+            return 'on'
+        
 
     def run(self):
         goon = True
@@ -181,6 +208,7 @@ class WindowScript(ScriptBase):
         """window_class:eg "Notepad",
             window_name: eg "test.txt - 记事本"
         """
+
         super().__init__(script_file, period_trigger=period_trigger,
                          loop_running=loop_running, running_time=running_time, *args, **kwargs)
         self.getWindow(window_class, window_name)
@@ -193,8 +221,9 @@ class WindowScript(ScriptBase):
     def swith_out_and_refocus_on_window(self, window2_class, window2_name):
         window2 = win32gui.FindWindow(window2_class, window2_name)
         self.focus_on_window(window=window2)
-        time.sleep(1)
+        time.sleep(1.5)
         self.focus_on_window()
+        time.sleep(1.5)
 
     def focus_on_window(self, window=None):
         if window == None:
@@ -211,7 +240,7 @@ class WindowScript(ScriptBase):
             for t in lt:
                 print(t)
             raise e
-    
+
 
 class TxtScript(WindowScript):
     """only for test, make a script son, operationg on a "test.txt" txt windows."""
@@ -263,13 +292,13 @@ class WowScript(WindowScript):
             shortRest(1)
 
 
-class GnomerganScript(WowScript):
+class GnomereganScript(WowScript):
     def __init__(self, player):
         super().__init__(player)
 
     def singleTripScript(self):
-        super(GnomerganScript, self).singleTripScript()
-        script_key = self.script_json['gnomergan_script']
+        super(GnomereganScript, self).singleTripScript()
+        script_key = self.script_json['gnomeregan_script']
         script_list = self.script_json[script_key]
         for sc in script_list:
             self.run_json_script_command(sc)
@@ -461,7 +490,7 @@ def console_run():
     option = None
     wow = WowClient()
     player = Player(wow)
-    script = GnomerganScript(player)
+    script = GnomereganScript(player)
     print("挂机防掉线开始")
     script.start()
     script.resume()
@@ -470,14 +499,6 @@ def console_run():
         option = input("是否停止？输入q停止挂机")
     print("挂机结束")
             
-
-@log
-def check_in_expiration():
-    with open("config.json", "r") as file:
-        read = json.dumps(eval(file.read()))
-        configs = json.loads(read)
-        expired_hash = configs['expired_hash']
-        return checkByExpiredHash(expired_hash)
 
 if __name__ == "__main__":
     console_run()
