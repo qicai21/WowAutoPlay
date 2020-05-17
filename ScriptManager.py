@@ -235,10 +235,13 @@ class TxtScript(WindowScript):
 
 
 class WowScript(WindowScript):
-    def __init__(self, script_file, player, period_trigger='on', loop_running=True, running_time=None, *args, **kwargs):
-        super(WowScript, self).__init__(script_file, period_trigger=period_trigger, 
-                                        loop_running=loop_running, running_time=running_time, *args, **kwargs)
+    def __init__(self, script_file, player, window2_class=None, window_name=None, period_trigger='on', loop_running=True, running_time=None, *args, **kwargs):
         self.player = player
+        super(WowScript, self).__init__(script_file, window2_class, window_name, period_trigger=period_trigger, 
+                                        loop_running=loop_running, running_time=running_time, *args, **kwargs)
+
+    def getWindow(self, window_class, window_name):
+        self.window = self.player.window.getWowWindow()
 
     def singleTripScript(self):
         if self.period_trigger:
