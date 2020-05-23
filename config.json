@@ -1,12 +1,4 @@
 {
-    "queue_npc": "1",
-    "honor_npc": "2",
-    "interact_btn": "\\",
-    "btn_bar": "2",
-    "reload_btn": "3",
-    "quit_game": "+",
-    "dragon_slayer_buff": 120,
-    "chief_regards_buff": 0,
     "enable_scripts":{
         "战歌峡谷": "Warsong.json",
         "阿拉希": "Arathi.json",
@@ -14,14 +6,27 @@
         "诺莫瑞根": "Gnomeregan.json",
         "世界buff": "WorldBuff.json"
     },
+    "hot_keys_in_game": {
+        "queue_npc": "1",
+        "honor_npc": "2",
+        "interact_btn": "\\",
+        "btn_bar": "2",
+        "reload_btn": "3",
+        "quit_game": "+"
+    },
+    "auto_afk_after_buff_remaining":{
+        "dragon_slayer_buff": 117,
+        "chief_regards_buff": 0,
+        "zandalar_buff": 120 
+    },
     "btn_pos_factor":{
         "test_btn":{"x":[10,100], "y":[20,40]},
         "join_queue_btn": {"x":[], "y":[]},
         "leave_queue_btn": {"x":[], "y":[]},
         "gnomeregan_door":{"x":[28,100], "y":[48,100]},
         "post_honormark_btn": {"x":[10, 233], "y":[83, 137]},
-        "alx_honormark_btn":{"x":[15, 260], "y":[52, 151]},
+        "arathi_honormark_btn":{"x":[15, 260], "y":[52, 151]},
         "warsong_honormark_btn":{"x":[], "y":[]}
     },
-    "expired_hash": -4922037987372535807
+    "expired_hash": 210759462210228675
 }

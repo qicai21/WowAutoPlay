@@ -161,9 +161,12 @@ def press(*args):
     '''
     one press, one release.
     accepts as many arguments as you want. e.g. press('left_arrow', 'a','b').
+
+    to specfic 5 sec hold a key then release, set a args with 5 as the last arg.
+    time between hold and release default with 0.05.
     '''
     arglist = list(args)
-    if len(args) > 1:
+    if len(args) > 0 and type(arglist[-1]) != str:
         hold = arglist.pop(-1)
     else:
         hold = 0.05

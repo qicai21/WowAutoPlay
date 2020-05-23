@@ -26,7 +26,7 @@ DEFAULT_TRIGGER_BASE = 5
 CONFIG_FILE = './config.json'
 SCRIPTS_FILE ='./scripts.json' 
 
-class PlayStatus(Enum):
+class PlayerBattleFieldStatus(Enum):
     # 在大厅未排队
     # 在大厅排队了
     # 进战场第一轮
@@ -47,6 +47,7 @@ def getAllActiveWindow():
 
 def parseScriptFileToJson(filepath):
     """ Parse a JSON file
+
         First remove comments and then use the json module package
         Comments look like :
             // ...
@@ -90,6 +91,9 @@ class ScriptBase(threading.Thread):
         loop_running: '=True/False',循环或单程执行
         
         running_time: '=None/time[%Y%m%d/%H:%M]', 定时执行，为None则不检查执行时间
+        关键属性：
+        self.configs: 从configs.json读取的，所有关于脚本游戏控制的config都在这里。
+        self.singleTripScript: 单轮循环脚本的执行，这个必须在子类中实现.
     """
     def __init__(self, script_file=None, period_trigger='off', loop_running=True,
                  running_time=None, *args, **kwargs):
@@ -125,10 +129,15 @@ class ScriptBase(threading.Thread):
         return self.can_go_on.isSet()
 
     def loadScript(self):
-        while(not self.is_running()):
-            self.script_json = parseScriptFileToJson(self.script_file)
-            return 
+        if self.script_file:
+            while(not self.is_running()):
+                self.script_json = parseScriptFileToJson(f'./scripts/{self.script_file}')
+                return 
     
+    def run_json_list(self, json_list):
+        for j in json_list:
+            self.run_json_script_command(j)
+
     def run_json_script_command(self, json_script):
         self.can_go_on.wait()
         action_type = list(json_script.keys())[0]
@@ -142,7 +151,10 @@ class ScriptBase(threading.Thread):
         if action_type == "keyboard_action":
             _func = getattr(keybdAct, action_name)
             if _func == keybdAct.press:
-                _func(action_param, action_comment)
+                if type(action_comment) == str:
+                    _func(action_param)
+                else:
+                    _func(action_param, action_comment)
             if _func == keybdAct.pressHoldRelease:
                 _func(*json_script[action_type][1:])
             else:
@@ -189,7 +201,9 @@ class ScriptBase(threading.Thread):
             self.pause()
             return 'off'
         else:
+            print('触发了等待')
             self.can_reload_script.wait()
+            print('等到了，程序继续执行')
             self.script_file = self.configs['enable_scripts'][script_name]
             self.loadScript()
             self.resume()
@@ -259,49 +273,187 @@ class TxtScript(WindowScript):
        
     def singleTripScript(self):
         self.focus_on_window()
-        for i in self.script_json:
-            self.run_json_script_command(i)
+        self.run_json_list(self.script_json)
 
 
 class WowScript(WindowScript):
-    def __init__(self, script_file, player, window2_class=None, window_name=None, period_trigger='on', loop_running=True, running_time=None, *args, **kwargs):
+    def __init__(self, script_file, player, window2_class=None, window_name=None,
+                 period_trigger='on', loop_running=True, running_time=None, *args, **kwargs):
         self.player = player
         super(WowScript, self).__init__(script_file, window2_class, window_name, period_trigger=period_trigger, 
                                         loop_running=loop_running, running_time=running_time, *args, **kwargs)
+        self.is_battlefield_new = True 
+        self.player_battle_filed_status = None
+        self.enableBuffDict = {k:[v, 0] for k,v in self.configs['auto_afk_after_buff_remaining'].items() if v > 0}
+        self.loadJoinQueueScript()
+
+    def __getattr__(self, attr_name):
+        """[SUGAR]: 以属性方式返回cript_json中的一些设置."""
+        if attr_name == "battlefield":
+            return self.script_json['battle_field_name']
+        elif attr_name == "script_type":
+            return self.script_json['script_type']
+        else:
+            raise AttributeError(f"{__class__.__name__} object has no attribute {attr_name}")
 
     def getWindow(self, window_class, window_name):
         self.window = self.player.window.getWowWindow()
 
+    def loadJoinQueueScript(self):
+        json_data = parseScriptFileToJson('./scripts/JoinQueue.json')
+        self.join_queue_scripts = json_data['join_queue_scripts']
+
     def singleTripScript(self):
+        """脚本单循环
+        
+        所有的wow脚本都分为这几个部分：
+        1. 周期性触发段，主要是断线重连；可以用cancelAutoRelogon关闭
+        2. 根据脚本类型来执行不同的操作逻辑
+        """
         if self.period_trigger:
             self.period_trigger.go_a_step()
             if self.period_trigger.activated():
-            # 先确认游戏是否断线了，断线就重连
                 if self.player.checkOffline():
                     self.player.reLogon()
-                # 刷新并进行游戏
         self.refresh()
+        if self.script_type == "battlefield_script":
+            self.runBattleFieldScript()
+        elif self.script_type == "dungeon_script":
+            self.runDungeonScript()
+        elif self.script_type == "wait_buff_script":
+            self.runWaitBuffScript()
+        else:
+            raise NotImplementedError("Unknow script type, check script_type setting in json")
+
+    def runWaitBuffScript(self):
+        for buff,time_set in self.enableBuffDict.items():
+            if time_set[1] == 0:
+                if self.player.checkBuff(buff):
+                    if time_set[0] == 120:
+                        self.cancelAutoRelogon()
+                        self.loop_running = False
+                        self.player.logout()
+                        return
+                    else:
+                        time_set[1] = time.time() + (120 - time_set[0]) * 60
+            else:
+                if time.time() > time_set[1]:
+                    self.cancelAutoRelogon()
+                    self.loop_running = False
+                    self.player.logout()
+                    return
+        # 执行一些无谓的操作，防止掉线
+        self.run_json_list(self.script_json['main_scripts'])
+        longRest(60)
+
+    def runDungeonScript(self):
+        self.run_json_list(self.script_json["main_scripts"])
+
+    def runBattleFieldScript(self):
+        self.switchPlayerBattleFieldStatus()
+        if self.player_battle_filed_status in [
+                 PlayerBattleFieldStatus.new_to_hall,
+                 PlayerBattleFieldStatus.queueing_in_hall
+                ]:
+            print(f'大厅很安逸，交交牌子排排队,当前状态为{self.player_battle_filed_status}')
+            self.run_json_list(self.join_queue_scripts)
+            longRest(30) # 延迟30秒，本轮结束 
+        else:
+            print('哟，在战场呢')
+            self.playInBattlefield()
+            self.player_battle_filed_status = PlayerBattleFieldStatus.play_in_battlefield
+
+    def switchPlayerBattleFieldStatus(self):
+        """通过player_battle_field_status的切换来为不同逻辑启动提供依据.
+
+        具体切换：
+        上轮状态为None，表示程序启动时人已经在战场了，肯定不是新场
+        上轮状态为new_to_battlefield,play_in_battlefield,本轮都不是新场
+        上轮状态为 *in_hall, 表示新来到战场，本轮是新进场
+        上轮传入状态为new_to_battlefield or play_in_battle or None,则本轮开始转为new_to_hall;如果刚启动检测是在战场里，那是断线重连的，不能算新场
+        上轮传入状态为 queueing_in_hall,则本轮开始变queueing_in_hall
+        """
+        in_battlefield = self.checkInBattlefieldOrNot()
+        if in_battlefield:
+            if self.player_battle_filed_status in [
+                 None, 
+                 PlayerBattleFieldStatus.new_to_battlefield,
+                 PlayerBattleFieldStatus.play_in_battlefield
+                ]:
+                self.player_battle_filed_status = PlayerBattleFieldStatus.play_in_battlefield
+            else:
+                self.player_battle_filed_status = PlayerBattleFieldStatus.new_to_battlefield
+        else:
+            if self.player_battle_filed_status in [
+                 None,
+                 PlayerBattleFieldStatus.new_to_battlefield,
+                 PlayerBattleFieldStatus.play_in_battlefield
+                ]:
+                self.player_battle_filed_status = PlayerBattleFieldStatus.new_to_hall 
+            else:
+                self.player_battle_filed_status = PlayerBattleFieldStatus.queueing_in_hall
+
+    def checkInBattlefieldOrNot(self):
+        return self.player.checkInBattlefield()
+
+    def playInBattlefield(self):
+        alive = self.player.checkAlive()
+        if alive:
+            print('运气不错，活着')
+            if self.player_battle_filed_status == PlayerBattleFieldStatus.new_to_battlefield:
+                print('新场，等一下')
+                self.run_json_list(self.script_json['standby_scripts'])
+            else:
+                print('执行战场挂机跑动')
+                self.run_json_list(self.script_json['main_scripts'])
+        else:
+            print('死鬼别动，小心灵魂被风吹散')
+            keybdAct.press("spacebar")
+            longRest(15)
+
+##############     integrated_actions [供script_json调用的方法]  ###############
 
     def refresh(self):
         self.player.refreshWindow()
         longRest()
         self.player.reSelectBtnBar()
-        # 跳3下
-        for i in range(0,3):
+        # 跳2下
+        for i in range(0,2):
             keybdAct.press("spacebar")
-            shortRest(1)
+            shortRest(1.5)
 
+    def pass_corner_1(self):
+        keybdAct.press("spacebar")
+        shortRest(1.5)
+        keybdAct.press("spacebar")
+        shortRest(1.5)
+        keybdAct.press("up_arrow")
+        shortRest(0.5)
+        keybdAct.press("a", 0.17)
+        shortRest(0.5)
+        keybdAct.press("a", 0.15)
+        shortRest(0.5)
+        keybdAct.press("a", 0.18)
+        shortRest(2.2)
+        keybdAct.press("a", 0.62)
+        shortRest(5.5)
+        keybdAct.press("s")
 
-class GnomereganScript(WowScript):
-    def __init__(self, player):
-        super().__init__(player)
+    def cancelAutoRelogon(self):
+        """关闭周期性触发器，周期性方法如自动重新登录将关闭"""
+        self.set_period_trigger("off")
 
-    def singleTripScript(self):
-        super(GnomereganScript, self).singleTripScript()
-        script_key = self.script_json['gnomeregan_script']
-        script_list = self.script_json[script_key]
-        for sc in script_list:
-            self.run_json_script_command(sc)
+    def postHonormarkIfNewEnterHall(self):
+        if self.player_battle_filed_status == PlayerBattleFieldStatus.new_to_hall:
+            self.player.postHonormark(self.battlefield)
+            longRest()
+
+    def joinQueueIfNewEnterHall(self):
+        if self.player_battle_filed_status == PlayerBattleFieldStatus.new_to_hall:
+            keybdAct.press(self.player.tarQueueNpc)
+            longRest()
+            keybdAct.press(self.player.tarQueueNpc)
+            longRest()
 
     def resetDungeon(self):
         while self.player.checkInDungeon():
@@ -313,184 +465,27 @@ class GnomereganScript(WowScript):
         self.player.attackLoop(60)
 
     def enable_key_bar_2(self):
-        keybdAct.pressHoldRelease("shift", "2")
-        time.sleep(0.5)
+        self.player.reSelectBtnBar()
 
     def attack_120(self):
         self.player.turnaround(180)
         shortRest()
         self.player.attackLoop(120, force_to_target=True)
 
+    def check_combat_and_attack(self):
+        self.player.check_combat_and_attack()
 
-class WaitForBuffScript(WowScript):
-    def __init__(self, player):
-        super().__init__(player)
-        self.dragonHeadBuffRemaining = None
-        self.chiefRegardsBuffRemaining = None
-        with open('./config.json', 'r') as f:
-            read = json.load(f)
-            self.dragonHeadBuffMin = read['dragon_slayer_buff']
-            self.chiefRegardsBuffMin = read['chief_regards_buff']
+    def openDoor(self):
+        self.player.openDoor()
 
-    @log
-    def singleTripScript(self):
-        super(WaitForBuffScript, self).singleTripScript()
-        for i in range(20):
-            keybdAct.press('spacebar')
-            longRest()
-
-        # player能识别自己的buff，并统计时间。
-        # 第一buff，龙头(屠龙者的咆哮)，第二buff酋长祝福
-        ########################
-        # time.time()时间戳不能像下边这样用，再改
-        ########################
-        if self.dragonHeadBuffMin != 0:
-            if self.dragonHeadBuffRemaining is None:
-                if self.player.checkDragonHeadBuff():
-                    self.dragonHeadBuffRemaining = time.time()
-            self.dragonHeadBuffRemaining = 120*60 - (time.time() - self.dragonHeadBuffRemaining)
-            print(f"目前情况为buff时间{self.dragonHeadBuffRemaining}, 要求时间{self.dragonHeadBuffMin}")
-            if self.dragonHeadBuffRemaining < self.dragonHeadBuffMin * 60:
-                self.player.logout()
-                self.can_go_on.clear()
-
-        longRest(10)
-        if self.chiefRegardsBuffMin != 0:
-            if self.chiefRegardsBuffRemaining is None:
-                if self.player.checkChiefRegardsBuff():
-                    self.chiefRegardsBuffRemaining = time.time()
-            self.chiefRegardsBuffRemaining = 120*60 - (time.time() - self.chiefRegardsBuffRemaining)
-            if self.chiefRegardsBuffRemaining < self.chiefRegardsBuffMin * 60:
-                self.player.logout()
-                self.can_go_on.clear()
-
-        longRest(60)
-
-
-class BattlefieldWowScript(WowScript):
-    def __init__(self, player):
-        WowScript.__init__(self, player)
-        self.is_battlefield_new = True 
-        self.player_status = None
-
-    def checkInBattlefieldOrNot(self):
-        return self.player.checkInBattlefield()
-
-    def postHonormarkIfNewEnterHall(self):
-        # 如果是进了大厅还没排队，交章
-        if self.player_status == PlayStatus.new_to_hall:
-            self.player.postHonormark(self.battlename)
-            longRest()
-
-    def joinQueueIfNewEnterHall(self):
-        if self.player_status == PlayStatus.new_to_hall:
-            keybdAct.press(self.player.tarQueueNpc)
-            longRest()
-
-            keybdAct.press(self.player.tarQueueNpc)
-            longRest()
-
-    def joinQueueAndPostHonorMark(self):
-        script_key = self.script_json['join_queue_with_script']
-        script_list = self.script_json[script_key]
-        for sc in script_list:
-            self.run_json_script_command(sc)
-
-    def playInBattlefield(self):
-        # 各战场内不同做法，在子类中实现
-        pass
-
-    def switchPlayerStatus(self):
-        # Player状态校验
-        in_battlefield = self.checkInBattlefieldOrNot()
-        if in_battlefield:
-            # 上轮状态为None，表示程序启动时人已经在战场了，肯定不是新场
-            # 上轮状态为new_to_battlefield,play_in_battlefield,本轮都不是新场
-            if self.player_status in [None, PlayStatus.new_to_battlefield, PlayStatus.play_in_battlefield]:
-                self.player_status = PlayStatus.play_in_battlefield
-            
-            # 上轮状态为 *in_hall, 表示新来到战场，本轮是新进场
-            else:
-                self.player_status = PlayStatus.new_to_battlefield
-
-        # 不在战场
-        else:
-            # 上轮传入状态为new_to_battlefield or play_in_battle or None,则本轮开始转为new_to_hall
-            if self.player_status in [None, PlayStatus.new_to_battlefield, PlayStatus.play_in_battlefield]:
-                self.player_status = PlayStatus.new_to_hall # 如果刚启动检测是在战场里，那是断线重连的，不能算新场
-
-            # 上轮传入状态为 queueing_in_hall,则本轮开始变queueing_in_hall
-            else:
-                self.player_status = PlayStatus.queueing_in_hall
-
-
-    @log
-    def singleTripScript(self):
-        super(BattlefieldWowScript, self).singleTripScript()
-        self.switchPlayerStatus()
-        if self.player_status in [PlayStatus.new_to_hall, PlayStatus.queueing_in_hall]:
-            print(f'大厅很安逸，交交牌子排排队,当前状态为{self.player_status}')
-            # 不在战场：
-            # 去交一下牌子（交牌子也防掉线）
-            # 去找npc排队(排队宏也可以进战场)
-            self.joinQueueAndPostHonorMark()
-            # 延迟30秒，本轮结束 
-            longRest(30)
-        else:
-            print('哟，在战场呢')
-            self.playInBattlefield()
-            self.player_status = PlayStatus.play_in_battlefield
-
-class WarsongScript(BattlefieldWowScript):
-
-    def __init__(self, player):
-        super().__init__(player)
-        self.battlename = "warsong"
-
-    def playInBattlefield(self):
-        self.player.avoid_afk()
-        time.sleep(20)
- 
-
-class AlteracScript(BattlefieldWowScript):
-    def __init__(self, player):
-        super().__init__(player)
-        self.battlename = "alterac"
-
-    def playInBattlefield(self):
-        self.player.avoid_afk()
-        time.sleep(20)
-
-
-class AlxScript(BattlefieldWowScript):
-
-    def __init__(self, player):
-        super().__init__(player)
-        self.battlename = "alx"
-
-    def playInBattlefield(self):
-        # 检查是否存活      
-        alive = self.player.checkAlive()
-        # 活着：检查是否是刚刚进入新的战场
-        if alive:
-            print('运气不错，活着')
-            if self.player_status == PlayStatus.new_to_battlefield:
-                print('新场，等一下')
-                waitingInNewBattle()
-            else:
-                print('爬山吧，山的那一边其实还是山')
-                druidStealWalkingInBattle()
-        else:
-            print('死鬼别动，小心灵魂被风吹散')
-            keybdAct.press("spacebar")
-            longRest(15)
+################################################################################
 
 
 def console_run():
     option = None
     wow = WowClient()
     player = Player(wow)
-    script = GnomereganScript(player)
+    script = WowScript(player)
     print("挂机防掉线开始")
     script.start()
     script.resume()

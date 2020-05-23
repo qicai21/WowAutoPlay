@@ -6,8 +6,9 @@ import sys
 sys.path.append('..')
 from Laucher import Laucher
 from ScriptManager import WowScript
+from WowClient import WowClient
 from Player import Player
-from test.TestBase import FakeWowClient
+from tests.TestBase import FakeWowClient
 
 
 def write_json_script(script_name):
@@ -28,13 +29,12 @@ def write_json_script(script_name):
 
 class LaucherTest(unittest.TestCase):
     def test_click_start_btn_run_a_script(self):
-        window = FakeWowClient()
+        window = WowClient()
         player = Player(window)
-        script = WowScript('./scripts.json', player)
+        script = WowScript(None, player)
         laucher = Laucher(script)
-
         laucher.mainloop()
-        # laucher.click_start_btn()
-        # with open("log.txt", "r") as f:
-        #     logs = f.readline()
-        #     self.assertIn("hello", logs)
+        _ = True
+        while _:
+            _ = input("输入q结束\n") == "p"
+        self.fail()

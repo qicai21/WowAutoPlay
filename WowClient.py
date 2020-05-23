@@ -153,7 +153,7 @@ class WowClient():
         return (pos_x, pos_y)
 
     def readBtnInfoFromJson(self):
-        with open('config.json', 'r') as f:
+        with open('config.json', 'r', encoding='utf-8') as f:
             return json.load(f)['btn_pos_factor']
 
     def imageMatch(self, template_path, screenshot_scale):

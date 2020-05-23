@@ -1,0 +1,8 @@
+{
+    "script_type": "wait_buff_script",
+    "main_scripts":[
+        {"keyboard_action": ["press", "w", 0.5]},
+        {"wait_action": ["short_random_wait", 0, ""]},
+        {"keyboard_action": ["press", "s", 0.8]}
+    ]
+}

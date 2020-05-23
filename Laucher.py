@@ -2,7 +2,7 @@ import time
 import tkinter as tk
 from WowClient import WowClient
 from Player import Player
-from ScriptManager import AlxScript
+from ScriptManager import WowScript
 
 
 class Laucher(tk.Tk):
@@ -11,7 +11,7 @@ class Laucher(tk.Tk):
         if script==None:
             wow = WowClient()
             player = Player(wow)
-            self.script = AlxScript(player)
+            self.script = WowScript(player)
         else:
             self.script = script
 
@@ -22,6 +22,7 @@ class Laucher(tk.Tk):
         self.setup_information_label()
         self.setup_dropdown()
         self.setup_start_btn(self.click_start_btn)
+        self.script.start()
 
     def setup_background(self):
         self.img = tk.PhotoImage(file="./resources/background2.png")
@@ -53,20 +54,15 @@ class Laucher(tk.Tk):
         ).grid(row=1, column=1, padx=0.5, pady=2, sticky='n'+'s')
 
     def click_start_btn(self):
-        print(f"\ndropdown_select: {self.widgets['dropdown_selected'].get()} \n")
-        # self.widgets['start_btn_content'] = self.widgets['dropdown_selected']
-
-    def _click_start_btn(self):
         if not self.script.check_in_expiration():
-            self.widgets['start_btn_content'] = "过期了"
+            self.widgets['start_btn_content'].set("过期了")
             return
 
-        if self.script.is_running():
-            self.script.pause()
-            content = "恢复"
+        result = self.script.running_switch(self.widgets['dropdown_selected'].get())
+        if result == "on":
+            self.widgets['start_btn_content'].set("暂停")
+        elif result == "off":
+            self.widgets['start_btn_content'].set("恢复")
         else:
-            self.script.resume()
-            content = "暂停"
+            raise ValueError("程序running_switch出现了错误，具体原因未知。")
 
-        self.widgets['start_btn_content'] = content
-        self.script.start()

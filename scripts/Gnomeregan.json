@@ -1,60 +1,7 @@
-/*脚本都放在这里，方便使用者自定义个性化脚本
-这里至少有3个类的操作可以调用:
-A. "integrated_action",封装在Player类,以及scriptmanager下的固定动作，比如转身，以xx为目标，攻击，
-   例子: "integrated_action": ["postHonorMarkIfNewEnterHall", , "交章"], 执行内建方法postHonorMarkIfNewEnterHall, 
-   控制台输出交章，注意，2个逗号表示第二个参数为空，这里是给部分需要参数的内建方法预留的位置。
-
-B. "keyboard_action",按键行为，构成为["动作类型", "按键名称", "控制台输出信息"]
-   例子: "keyboard_action": ["press", "s", ""],按s键，控制台调试时不输出信息
-
-C. "wait_action": 等待，构成为["等待类型","最小等待时间","最大等待时间"]
-   例子: "wait_action": ["short_random_wait", 0, ""],生成一个默认短随机等待，0.25-0.6秒
-       "wait_action": ["wait_in_second", 5, ""],生成一个准确等待，5秒
-*/
-
 {
-    // 通过这个设置来决定启用那个脚本作为joinQueueAndPostHonorMark的脚本
-    "join_queue_with_script": "join_queue_script",
-    "gnomeregan_script": "gnomeregan_script_v1", 
-
-    // 排战场脚本
-    "join_queue_script":[
-        // 防止仍然处于跑动状态
-        {"keyboard_action": ["press", "s", "退一步中断跑步"]},
-        {"wait_action": ["short_random_wait", 0, ""]},
-
-        // 按2号宏，选择军需官为目标 
-        {"keyboard_action": ["press", "2", "目标军需官"]},
-        {"wait_action": ["short_random_wait", 0, ""]},
-
-        // 与军需官互动（朝军需官走去，抵达身边后打开frame
-        {"keyboard_action": ["press", "\\", "走向军需官"]},
-        {"wait_action": ["wait_in_second", 5, "给你5秒钟，够走了吧"]},
-
-        // 执行内置方法，交章
-        {"integrated_action": ["postHonormarkIfNewEnterHall", "交章"]},
-
-        // 按1号宏，选择排队npc
-        {"keyboard_action": ["press", "1", "目标排队NPC"]},
-        {"wait_action": ["short_random_wait", 0, ""]},
-
-        // 与排队NPC互动朝NPC走去，抵达身边后打开frame
-        {"keyboard_action": ["press", "\\", "走向NPC"]},
-        {"wait_action": ["wait_in_second", 5, "给你5秒钟，够走了吧"]},
-
-        // 执行内置方法，排队,同时出了场就进
-        {"integrated_action": ["joinQueueIfNewEnterHall", "排队"]},
-
-        // 加入你担心排队没排上，想要手动再点一下
-        // 按1号宏
-        {"keyboard_action": ["press", "1", "1号宏，再排队一下"]},
-        {"wait_action": ["short_random_wait", 0, ""]},
-
-        // 按3号宏刷新界面
-        {"keyboard_action": ["press", "3", "3号宏，刷新界面"]},
-        {"wait_action": ["wait_in_second", 10, "电脑再慢10秒也足够刷新"]}
-    ],
-    "gnomeregan_script_v1":[
+    "dungeon_name": "gnomeregan",
+    "script_type": "dungeon_script",
+    "main_scripts":[
         // 出本， 重置, 进本
         {"keyboard_action": ["press", "6", 0.05]}, 
         {"wait_action": ["wait_in_second", 1.5]}, 
@@ -66,7 +13,6 @@ C. "wait_action": 等待，构成为["等待类型","最小等待时间","最大
         {"wait_action": ["wait_in_second", 5]}, 
         {"keyboard_action": ["press", "s", 2.5]}, 
         {"wait_action": ["wait_in_second", 10]}, 
-        // {"integrated_action": ["enterDungeon", "进副本"]},
 
         // 第一个校正点
         {"keyboard_action": ["press", "up_arrow", 0.1]}, 
@@ -97,17 +43,7 @@ C. "wait_action": 等待，构成为["等待类型","最小等待时间","最大
         {"wait_action": ["wait_in_second", 1]}, 
 
         // 走到转弯处
-        {"keyboard_action": ["press", "up_arrow", 0.13]}, 
-        {"wait_action": ["wait_in_second", 0.5]}, 
-        {"keyboard_action": ["press", "a", 0.17]}, 
-        {"wait_action": ["wait_in_second", 0.5]}, 
-        {"keyboard_action": ["press", "a", 0.15]}, 
-        {"wait_action": ["wait_in_second", 0.5]}, 
-        {"keyboard_action": ["press", "a", 0.18]}, 
-        {"wait_action": ["wait_in_second", 2.2]}, 
-        {"keyboard_action": ["press", "a", 0.62]}, 
-        {"wait_action": ["wait_in_second", 5.5]}, 
-        {"keyboard_action": ["press", "s", 0.05]},
+        {"integrated_action": ["pass_corner_1", "1号校正点"]}, 
 
         // 走到3号校正点
         {"wait_action": ["wait_in_second", 1]}, 
@@ -122,12 +58,6 @@ C. "wait_action": 等待，构成为["等待类型","最小等待时间","最大
         {"keyboard_action": ["press", "left_arrow", 1.2]}, 
         {"wait_action": ["wait_in_second", 9.5]}, 
         {"keyboard_action": ["press", "s", 0.15]}, 
-        // {"wait_action": ["wait_in_second", 1.01]},  // 1
-        // {"keyboard_action": ["press", "d", 0.35]}, 
-        // {"wait_action": ["wait_in_second", 1.05]}, 
-        // {"keyboard_action": ["press", "up_arrow", 0.13]},
-        // {"wait_action": ["wait_in_second", 3.5]}, 
-        // {"keyboard_action": ["press", "s", 0.05]},
 
         // 靠左墙循环跳格走
         {"wait_action": ["wait_in_second", 1]}, // 2
@@ -181,7 +111,7 @@ C. "wait_action": 等待，构成为["等待类型","最小等待时间","最大
 
         // 出走廊，向大门进发
         {"wait_action": ["wait_in_second", 1]}, 
-        {"keyboard_action": ["press", "d", 0.4]}, 
+        {"keyboard_action": ["press", "d", 0.18]}, 
         {"wait_action": ["wait_in_second", 2.71]}, 
         {"keyboard_action": ["press", "up_arrow", 0.17]}, 
         {"wait_action": ["wait_in_second", 40]}, 
