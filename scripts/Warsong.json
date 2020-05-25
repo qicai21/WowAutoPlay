@@ -1,7 +1,59 @@
 {
     "battle_field_name": "warsong",
-    "script_type": "battle_field_script",
-    "main_script":[
-
+    "script_type": "battlefield_script",
+    "standby_scripts":[
+        {"keyboard_action": ["press", "d", 0.14]},
+        {"wait_action": ["wait_in_second", 1]},
+        {"keyboard_action": ["press", "up_arrow", 0.14]},
+        {"wait_action": ["wait_in_second", 2.8]},
+        {"keyboard_action": ["press", "s", 0.05]},
+        // {"wait_action": ["wait_in_second", 10]}, // 等待开门的时间
+        {"wait_action": ["wait_in_second", 1]},
+        {"keyboard_action": ["press", "a", 0.13]},
+        {"keyboard_action": ["press", "up_arrow", 0.07]},
+        {"wait_action": ["wait_in_second", 3.5]},
+        {"keyboard_action": ["press", "left_arrow", 0.08]},
+        {"wait_action": ["wait_in_second", 2.42]},
+        {"keyboard_action": ["press", "s", 0.05]},
+        {"keyboard_action": ["press", "5", 0.09]},
+        {"wait_action": ["wait_in_second", 5.5]},
+        {"keyboard_action": ["press", "up_arrow", 0.09]},
+        {"wait_action": ["wait_in_second", 2.02]},
+        {"keyboard_action": ["press", "right_arrow", 1]},
+        {"wait_action": ["wait_in_second", 0.53]},
+        {"keyboard_action": ["press", "right_arrow", 1]},
+        {"wait_action": ["wait_in_second", 4.65]},
+        {"keyboard_action": ["press", "left_arrow", 0.18]},
+        {"wait_action": ["wait_in_second", 0.62]},
+        {"keyboard_action": ["press", "left_arrow", 0.41]},
+        {"wait_action": ["wait_in_second", 0.99]},
+        {"keyboard_action": ["press", "left_arrow", 0.21]},
+        {"wait_action": ["wait_in_second", 0.77]},
+        {"keyboard_action": ["press", "left_arrow", 0.59]},
+        {"wait_action": ["wait_in_second", 2.91]},
+        {"keyboard_action": ["press", "left_arrow", 1.92]},
+        {"wait_action": ["wait_in_second", 0.64]},
+        {"keyboard_action": ["press", "left_arrow", 3.02]},
+        {"wait_action": ["wait_in_second", 0.73]},
+        {"keyboard_action": ["press", "left_arrow", 2.1]},
+        {"wait_action": ["wait_in_second", 0.62]},
+        {"keyboard_action": ["press", "left_arrow", 1.03]},
+        {"wait_action": ["wait_in_second", 0.7]},
+        {"keyboard_action": ["press", "left_arrow", 2.16]},
+        {"wait_action": ["wait_in_second", 0.56]},
+        {"keyboard_action": ["press", "left_arrow", 3.09]},
+        {"wait_action": ["wait_in_second", 0.07]},
+        {"keyboard_action": ["press", "left_arrow", 0.05]}
+   ],
+    "main_scripts":[
+        {"keyboard_action": ["press", "s", 0.05]},
+        // {"keyboard_action": ["press", "b", 0.05]}, // 变熊
+        {"keyboard_action": ["press", "tab", 0.05]},
+        {"wait_action": ["wait_in_second", 0.05]},
+        {"keyboard_action": ["press", "\\", 0.05]},
+        {"keyboard_action": ["press", "6", 0.05]},
+        {"wait_action": ["wait_in_second", 3]},
+        {"keyboard_action": ["press", "\\", 0.05]},
+        {"keyboard_action": ["press", "6", 0.05]}
     ]
 }

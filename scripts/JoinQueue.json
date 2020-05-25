@@ -28,7 +28,7 @@
         // 执行内置方法，排队,同时出了场就进
         {"integrated_action": ["joinQueueIfNewEnterHall", "排队"]},
 
-        // 加入你担心排队没排上，想要手动再点一下
+        // 假如你担心排队没排上，想要手动再点一下
         // 按1号宏
         {"keyboard_action": ["press", "1", "1号宏，再排队一下"]},
         {"wait_action": ["short_random_wait", 0, ""]},

@@ -104,8 +104,16 @@ def TakeRecord():
     recorder = KeyboardRecorder()
     print('录制开始')
     recorder.start()
-    with open('./scripts/script_records.json', 'w+') as f:
-        json.dump({'scripts': recorder.script}, f)
+    time_stamp = time.strftime("%m%d_%H%M", time.localtime())
+    json_data = json.dumps({"scripts": recorder.script})
+    with open(f'./script_records_{time_stamp}.json', 'w+') as f:
+        lines = json_data.split("},")
+        f.write(lines[0][:13] + "\n")
+        f.write("    " + lines[0][13:] + "},\n")
+        for line in lines[1:-1]:
+            f.write("   " + line + "},\n")
+        f.write("   " + lines[-1][:-2] + "},\n")
+        f.write("]}")
     print('录制结束')
 
 

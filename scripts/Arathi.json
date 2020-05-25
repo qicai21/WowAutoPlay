@@ -8,9 +8,7 @@
         {"keyboard_action": ["press", "s", 0.09]},
         {"wait_action": ["wait_in_second", 7.33]},
         {"keyboard_action": ["press", "5", 0.08]},
-        {"wait_action": ["wait_in_second", 7]}
-    ],
-    "main_scripts":[
+        {"wait_action": ["wait_in_second", 7]},
         {"wait_action": ["wait_in_second", 3.03]},
         {"keyboard_action": ["press", "up_arrow", 0.02]},
         {"wait_action": ["wait_in_second", 4.14]},
@@ -31,5 +29,17 @@
         {"keyboard_action": ["press", "d", 0.07]},
         {"wait_action": ["wait_in_second", 3.2]},
         {"keyboard_action": ["press", "s", 0.07]}
+
+    ],
+    "main_scripts":[
+        {"keyboard_action": ["press", "s", 0.05]},
+        // {"keyboard_action": ["press", "b", 0.05]}, // 变熊
+        {"keyboard_action": ["press", "tab", 0.05]},
+        {"wait_action": ["wait_in_second", 0.05]},
+        {"keyboard_action": ["press", "\\", 0.05]},
+        {"keyboard_action": ["press", "6", 0.05]},
+        {"wait_action": ["wait_in_second", 3]},
+        {"keyboard_action": ["press", "\\", 0.05]},
+        {"keyboard_action": ["press", "6", 0.05]}
     ]
 }

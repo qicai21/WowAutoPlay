@@ -15,7 +15,7 @@
         "quit_game": "+"
     },
     "auto_afk_after_buff_remaining":{
-        "dragon_slayer_buff": 117,
+        "dragon_slayer_buff": 120,
         "chief_regards_buff": 0,
         "zandalar_buff": 120 
     },
@@ -26,7 +26,7 @@
         "gnomeregan_door":{"x":[28,100], "y":[48,100]},
         "post_honormark_btn": {"x":[10, 233], "y":[83, 137]},
         "arathi_honormark_btn":{"x":[15, 260], "y":[52, 151]},
-        "warsong_honormark_btn":{"x":[], "y":[]}
+        "warsong_honormark_btn":{"x":[15, 260], "y":[50, 151]}
     },
     "expired_hash": 210759462210228675
 }

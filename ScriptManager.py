@@ -145,7 +145,7 @@ class ScriptBase(threading.Thread):
         action_param = json_script[action_type][1]
         action_comment = json_script[action_type][-1]
 
-        if MODE != "test" and action_comment != None and action_comment != "":
+        if MODE == "test" and action_comment != None and action_comment != "":
             print(action_comment)
 
         if action_type == "keyboard_action":
@@ -167,7 +167,10 @@ class ScriptBase(threading.Thread):
                 time.sleep(action_param)
 
         elif action_type == "integrated_action":
-            self.__getattribute__(action_name)()
+            if type(action_param) == float:
+                self.__getattribute__(action_name)(action_param)
+            else:
+                self.__getattribute__(action_name)()
         
         else:
             print('bad script json command:' + action_type)
@@ -357,7 +360,7 @@ class WowScript(WindowScript):
                 ]:
             print(f'大厅很安逸，交交牌子排排队,当前状态为{self.player_battle_filed_status}')
             self.run_json_list(self.join_queue_scripts)
-            longRest(30) # 延迟30秒，本轮结束 
+            longRest(18) # 延迟30秒，本轮结束 
         else:
             print('哟，在战场呢')
             self.playInBattlefield()
@@ -418,25 +421,34 @@ class WowScript(WindowScript):
         longRest()
         self.player.reSelectBtnBar()
         # 跳2下
-        for i in range(0,2):
-            keybdAct.press("spacebar")
-            shortRest(1.5)
+        # for i in range(0,2):
+        #     keybdAct.press("spacebar")
+        #     shortRest(1.5)
 
-    def pass_corner_1(self):
+    def pass_corner_1(self, _t):
+        keybdAct.press("s", 0.1)
+        shortRest(0.5)
         keybdAct.press("spacebar")
         shortRest(1.5)
-        keybdAct.press("spacebar")
-        shortRest(1.5)
+
+        keybdAct.press("a", _t)
+        shortRest(0.5)
         keybdAct.press("up_arrow")
+        shortRest(4.1)
+        keybdAct.press("s", 0.45)
         shortRest(0.5)
-        keybdAct.press("a", 0.17)
+        keybdAct.press("d", 0.35)
         shortRest(0.5)
-        keybdAct.press("a", 0.15)
-        shortRest(0.5)
-        keybdAct.press("a", 0.18)
+        keybdAct.press("up_arrow")
+        shortRest(1.6)
+        keybdAct.press("a", 0.2)
+        shortRest(0.8)
+        keybdAct.press("a", 0.4)
+        shortRest(2.5)
+        keybdAct.press("a", 0.42)
         shortRest(2.2)
-        keybdAct.press("a", 0.62)
-        shortRest(5.5)
+        keybdAct.press("a", 0.11)
+        shortRest(2.63)
         keybdAct.press("s")
 
     def cancelAutoRelogon(self):
