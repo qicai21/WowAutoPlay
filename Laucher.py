@@ -82,3 +82,9 @@ class Laucher(tk.Tk):
         self.widgets['take_record_btn_content'].set("录制")
         return
         
+if __name__ == "__main__":
+    window = WowClient()
+    player = Player(window)
+    script = WowScript(None, player)
+    laucher = Laucher(script)
+    laucher.mainloop()

@@ -6,7 +6,7 @@ import threading
 import tkinter as tk
 from tkinter import *
 from enum import Enum
-from win32 import win32gui
+import win32gui
 from pywintypes import error
 import win32com.client as client
 import pythoncom
@@ -21,7 +21,7 @@ from logWrapper import log
 
 # 每5次执行一起重新登录检验
 # 这是一个cheat，最好还是放在config中
-MODE = "test"
+MODE = "product"
 DEFAULT_TRIGGER_BASE = 5
 CONFIG_FILE = './config.json'
 SCRIPTS_FILE ='./scripts.json' 
