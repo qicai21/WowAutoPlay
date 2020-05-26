@@ -1,0 +1,40 @@
+{
+    "join_queue_scripts":[
+        // 防止仍然处于跑动状态
+        {"keyboard_action": ["press", "s", "退一步中断跑步"]},
+        {"wait_action": ["short_random_wait", 0, ""]},
+
+        // 按2号宏，选择军需官为目标 
+        {"keyboard_action": ["press", "2", "目标军需官"]},
+        {"wait_action": ["short_random_wait", 0, ""]},
+
+        // 与军需官互动（朝军需官走去，抵达身边后打开frame
+        {"keyboard_action": ["press", "s", 0.6]},
+        {"keyboard_action": ["press", "\\", "走向军需官"]},
+        {"wait_action": ["wait_in_second", 5, "给你5秒钟，够走了吧"]},
+
+        // 执行内置方法，交章
+        {"integrated_action": ["postHonormarkIfNewEnterHall", "交章"]},
+
+        // 按1号宏，选择排队npc
+        {"keyboard_action": ["press", "1", "目标排队NPC"]},
+        {"wait_action": ["short_random_wait", 0, ""]},
+
+        // 与排队NPC互动朝NPC走去，抵达身边后打开frame
+        {"keyboard_action": ["press", "s", 0.6]},
+        {"keyboard_action": ["press", "\\", "走向NPC"]},
+        {"wait_action": ["wait_in_second", 5, "给你5秒钟，够走了吧"]},
+
+        // 执行内置方法，排队,同时出了场就进
+        {"integrated_action": ["joinQueueIfNewEnterHall", "排队"]},
+
+        // 假如你担心排队没排上，想要手动再点一下
+        // 按1号宏
+        {"keyboard_action": ["press", "1", "1号宏，再排队一下"]},
+        {"wait_action": ["short_random_wait", 0, ""]},
+
+        // 按3号宏刷新界面
+        {"keyboard_action": ["press", "3", "3号宏，刷新界面"]},
+        {"wait_action": ["wait_in_second", 10, "电脑再慢10秒也足够刷新"]}
+    ]
+}

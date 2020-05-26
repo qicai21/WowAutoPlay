@@ -19,17 +19,17 @@ class Player():
         self.poistion = "unknow"
         self.window = wow_window
         config = self.read_config()
-        self.tarQueueNpc = config['queue_npc']
-        self.tarHonorNpc = config['honor_npc']
-        self.interactBtn = config['interact_btn']
-        self.btnBarNumber = config['btn_bar']
-        self.quitGameBtn = config['quit_game']
-        self.reloadBtn = config['reload_btn']
+        self.tarQueueNpc = config['hot_keys_in_game']['queue_npc']
+        self.tarHonorNpc = config['hot_keys_in_game']['honor_npc']
+        self.interactBtn = config['hot_keys_in_game']['interact_btn']
+        self.btnBarNumber = config['hot_keys_in_game']['btn_bar']
+        self.quitGameBtn = config['hot_keys_in_game']['quit_game']
+        self.reloadBtn = config['hot_keys_in_game']['reload_btn']
         if self.quitGameBtn == '=':
             self.quitGameBtn = '+'
         
     def read_config(self):
-        with open('config.json', 'r') as f:
+        with open('config.json', 'r', encoding='utf-8') as f:
             config = json.load(f)
             return config
     
@@ -45,7 +45,7 @@ class Player():
         shortRest()
 
     def openDoor(self):
-        (x, y) = self.window.getBtnPos('gnomergan_door')
+        (x, y) = self.window.getBtnPos('gnomeregan_door')
         keybdAct.press('`')
         longRest(3)
         keybdAct.press('s', 0.15)
@@ -62,10 +62,12 @@ class Player():
     def postHonormark(self, battlefield):
         # 需要提供战场名称，alx or warsong。
         btn_name = None
-        if battlefield == "alx" or battlefield == "ALX":
-            btn_name = "alx_honormark_btn"
-        elif battlefield == "warsong" or battlefield == "zg":
+        if battlefield == "arathi" or battlefield == "ALX":
+            btn_name = "arathi_honormark_btn"
+        elif battlefield == "warsong" or battlefield == "ZG":
             btn_name = "warsong_honormark_btn"
+        elif battlefield == "alteric" or battlefield == "AS":
+            btn_name = "alteric_honormark_btn"
         else:
             raise Exception("战场名称不对")
 
@@ -113,7 +115,9 @@ class Player():
             self.window.focus_on_window()
             longRest()
             keybdAct.pressHoldRelease('alt', 'F4')
-            is_wow_window_alive = self.window.getWowWindow()
+            longRest()
+            self.window.getWowWindow()
+            is_wow_window_alive = self.window.window != None
 
         print("关闭所有wow窗口")
 
@@ -126,7 +130,8 @@ class Player():
             print("从登陆器执行了登录")
 
             longRest(30)
-            is_wow_window_alive = self.window.getWowWindow()
+            self.window.getWowWindow()
+            is_wow_window_alive = self.window.window != None
         # 检查是否登录到了人物选择页面，如果没有就等待，可能是排队了
         # 取消掉是否登录到游戏人物界面检验，因为是断线重连
         # is_in_player_select = self.checkInPlaySelectStatus()
@@ -145,7 +150,7 @@ class Player():
         keybdAct.press(self.quitGameBtn)
 
     def checkInDungeon(self):
-        sysmbol = './resources/img_templates/in_gnomergan_tplt.jpg'
+        sysmbol = './resources/img_templates/in_gnomeregan_tplt.jpg'
         result = self.window.imageMatch(sysmbol, (4, 1))
         print(f'进入副本匹配,匹配结果为:{result}')
         return result > 10
@@ -156,16 +161,18 @@ class Player():
         print(f'检擦是否有铅笔小怪，结果{result}')
         return result > 10
 
-    def checkDragonHeadBuff(self):
-        sysmbol = './resources/img_templates/dragon_slayer_buff_tplt.jpg'
-        result = self.window.imageMatch(sysmbol, (4, 1))
-        print(f'龙头buff匹配, 匹配结果为:{result}')
-        return result > 10
+    def checkBuff(self, buff):
+        """
+        buff: dragon_slayer_buff, chief_regards_buff, zandalar_buff. 
+        Make sure {buff}_tplt.jpg exist './resources/img_templates/'.
+        """
 
-    def checkChiefRegardsBuff(self):
-        sysmbol = './resources/img_templates/chief_regards_buff_tplt.jpg'
+        if buff not in ['dragon_slayer_buff', 'chief_regards_buff', 'zandalar_buff']:
+            raise KeyError(f"{buff} maybe wrong, only dragon_slayer_buff, chief_regards_buff, zandalar_buff is available.")
+
+        sysmbol = f'./resources/img_templates/{buff}_tplt.jpg'
         result = self.window.imageMatch(sysmbol, (4, 1))
-        print(f'酋长祝福匹配, 匹配结果为:{result}')
+        print(f'{buff}匹配, 匹配结果为:{result}')
         return result > 10
 
     def checkInPlaySelectStatus(self):
